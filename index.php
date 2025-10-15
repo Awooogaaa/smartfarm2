@@ -490,21 +490,21 @@ include "koneksi.php";
             <div class="d-flex align-items-center flex-wrap gap-3">
               <div class="mobile-product-header d-md-none w-100">
                 <div class="mobile-title-section">
-                  <div class="mobile-title-row">
-                    <div>
-                      <h4 class="mb-0 fw-bold text-dark">
+                    <div class="mobile-title-row">
+                        <div class="w-100">
+                        <h4 class="mb-2 fw-bold text-dark">
                         <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Daftar Produk
-                      </h4>
-                      <?php if ($searchTerm) : ?>
-                        <span class="badge bg-secondary mt-1"><i class="bi bi-search me-1"></i>"<?= htmlspecialchars($searchTerm) ?>"</span>
-                      <?php endif; ?>
-                    </div>
-                    <span class="mobile-stats-badge">
-                      <i class="bi bi-box me-1"></i><?= $totalData ?><?= $searchTerm ? " dari $totalProduk" : "" ?> Produk
-                    </span>
-                  </div>
-                </div>
-              </div>
+                        </h4>
+                        <span class="mobile-stats-badge">
+                        <i class="bi bi-box me-1"></i><?= $totalData ?><?= $searchTerm ? " dari $totalProduk" : "" ?> Produk
+              </span>
+        <?php if ($searchTerm) : ?>
+          <span class="badge bg-secondary ms-2"><i class="bi bi-search me-1"></i>"<?= htmlspecialchars($searchTerm) ?>"</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+</div>
 
               <h4 class="mb-0 fw-bold text-dark d-none d-md-block"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Daftar Produk</h4>
               <span class="stats-badge d-none d-md-inline"><i class="bi bi-box me-1"></i>
