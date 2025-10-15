@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 30, 2025 at 01:39 PM
+-- Generation Time: Oct 15, 2025 at 01:37 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -18,8 +18,21 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `smartfarm`
+-- Database: `smartfarm2`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `gudang`
+--
+
+CREATE TABLE `gudang` (
+  `kodegudang` int NOT NULL,
+  `namagudang` varchar(100) NOT NULL,
+  `golongan` varchar(250) NOT NULL,
+  `keterangan` varchar(250) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -29,11 +42,11 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `produk` (
   `id` int NOT NULL,
-  `kode` varchar(10) NOT NULL,
-  `nama` varchar(100) NOT NULL,
-  `satuan` varchar(50) DEFAULT NULL,
-  `harga` int DEFAULT NULL,
-  `gambar` varchar(255) DEFAULT NULL
+  `kode` varchar(100) NOT NULL,
+  `nama` varchar(250) NOT NULL,
+  `satuan` varchar(100) NOT NULL,
+  `image` varchar(250) NOT NULL,
+  `kodegudang` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -41,21 +54,44 @@ CREATE TABLE `produk` (
 --
 
 --
+-- Indexes for table `gudang`
+--
+ALTER TABLE `gudang`
+  ADD PRIMARY KEY (`kodegudang`);
+
+--
 -- Indexes for table `produk`
 --
 ALTER TABLE `produk`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `kode` (`kode`);
+  ADD UNIQUE KEY `kode` (`kode`),
+  ADD KEY `kodegudang` (`kodegudang`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
+-- AUTO_INCREMENT for table `gudang`
+--
+ALTER TABLE `gudang`
+  MODIFY `kodegudang` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `produk`
 --
 ALTER TABLE `produk`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `produk`
+--
+ALTER TABLE `produk`
+  ADD CONSTRAINT `produk_ibfk_1` FOREIGN KEY (`kodegudang`) REFERENCES `gudang` (`kodegudang`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
