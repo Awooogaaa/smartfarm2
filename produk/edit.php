@@ -1,13 +1,18 @@
 <?php 
-session_start(); // <-- TAMBAHKAN INI
-include "koneksi.php"; 
+session_start();
+// PERBAIKAN 1: Path ke koneksi.php (harus naik satu level)
+include "../koneksi.php"; 
 ?>
 <?php
+// TAMBAHAN 1: Mengambil data gudang untuk dropdown
+$gudang_result = mysqli_query($koneksi, "SELECT kodegudang, namagudang FROM gudang ORDER BY namagudang ASC");
+$gudang_options = mysqli_fetch_all($gudang_result, MYSQLI_ASSOC);
+
 $error = "";
 
 // Ambil ID dari URL
 if (!isset($_GET['id'])) {
-    header("Location: index.php");
+    header("Location: index.php"); // Path sudah benar
     exit;
 }
 $id = $_GET['id'];
@@ -17,15 +22,14 @@ if (isset($_GET['delete'])) {
     $delete_id = $_GET['delete'];
     $result = mysqli_query($koneksi, "SELECT gambar FROM produk WHERE id=$delete_id");
     $row = mysqli_fetch_assoc($result);
-    if ($row && !empty($row['gambar']) && file_exists("uploads/" . $row['gambar'])) {
-        unlink("uploads/" . $row['gambar']);
+    // PERBAIKAN 2: Path untuk unlink file diubah
+    if ($row && !empty($row['gambar']) && file_exists("../uploads/" . $row['gambar'])) {
+        unlink("../uploads/" . $row['gambar']);
     }
     mysqli_query($koneksi, "DELETE FROM produk WHERE id=$delete_id");
 
-    // --- UBAH INI ---
     $_SESSION['msg'] = 'deleted';
-    header("Location: index.php");
-    // --- AKHIR PERUBAHAN ---
+    header("Location: index.php"); // Path sudah benar
     exit;
 }
 
@@ -33,7 +37,7 @@ if (isset($_GET['delete'])) {
 $result = mysqli_query($koneksi, "SELECT * FROM produk WHERE id=$id");
 $data = mysqli_fetch_assoc($result);
 if (!$data) {
-    header("Location: index.php");
+    header("Location: index.php"); // Path sudah benar
     exit;
 }
 
@@ -43,6 +47,11 @@ if (isset($_POST['update'])) {
     $nama   = trim($_POST['nama']);
     $satuan = trim($_POST['satuan']);
     $harga  = trim($_POST['harga']);
+    // TAMBAHAN 2: Mengambil kodegudang dari form
+    $kodegudang = trim($_POST['kodegudang']);
+    if (empty($kodegudang)) {
+        $kodegudang = NULL; // Set jadi NULL jika tidak dipilih
+    }
 
     // Validasi panjang Kode dan Nama
     if (strlen($kode) > 20) {
@@ -87,28 +96,45 @@ if (isset($_POST['update'])) {
 
         // Prioritas 1: Cek apakah gambar ditandai untuk dihapus
         if (isset($_POST['hapus_gambar']) && $_POST['hapus_gambar'] == '1') {
-            if (!empty($data['gambar']) && file_exists("uploads/" . $data['gambar'])) {
-                unlink("uploads/" . $data['gambar']);
+             // PERBAIKAN 3: Path untuk unlink file diubah
+            if (!empty($data['gambar']) && file_exists("../uploads/" . $data['gambar'])) {
+                unlink("../uploads/" . $data['gambar']);
             }
             $gambar_query_part = ", gambar=''";
         }
         // Prioritas 2: Jika tidak, cek apakah ada gambar baru yang di-upload
         elseif (!empty($_FILES['gambar']['name'])) {
-            if (!empty($data['gambar']) && file_exists("uploads/" . $data['gambar'])) {
-                unlink("uploads/" . $data['gambar']);
+            // PERBAIKAN 4: Path untuk unlink file diubah
+            if (!empty($data['gambar']) && file_exists("../uploads/" . $data['gambar'])) {
+                unlink("../uploads/" . $data['gambar']);
             }
             $gambar_final = uniqid() . '-' . $_FILES['gambar']['name'];
-            move_uploaded_file($_FILES['gambar']['tmp_name'], "uploads/" . $gambar_final);
-            $gambar_query_part = ", gambar='$gambar_final'";
+            // PERBAIKAN 5: Path untuk upload file diubah
+            move_uploaded_file($_FILES['gambar']['tmp_name'], "../uploads/" . $gambar_final);
+            $gambar_query_part = ", gambar='" . mysqli_real_escape_string($koneksi, $gambar_final) . "'";
+        }
+        
+        // TAMBAHAN 3: Menyiapkan kodegudang untuk query
+        if ($kodegudang === NULL) {
+            $kodegudang_sql = "NULL";
+        } else {
+            // Keamanan dasar untuk string
+            $kodegudang_sql = "'" . mysqli_real_escape_string($koneksi, $kodegudang) . "'";
         }
 
-        $query = "UPDATE produk SET kode='$kode', nama='$nama', satuan='$satuan', harga='$harga' $gambar_query_part WHERE id=$id";
+        // PERBAIKAN 6: Query UPDATE ditambahkan kodegudang dan di-escape
+        $query = "UPDATE produk SET 
+                    kode='" . mysqli_real_escape_string($koneksi, $kode) . "', 
+                    nama='" . mysqli_real_escape_string($koneksi, $nama) . "', 
+                    satuan='" . mysqli_real_escape_string($koneksi, $satuan) . "', 
+                    harga='" . mysqli_real_escape_string($koneksi, $harga) . "',
+                    kodegudang=$kodegudang_sql
+                    $gambar_query_part 
+                  WHERE id=$id";
         mysqli_query($koneksi, $query);
 
-        // --- UBAH INI ---
         $_SESSION['msg'] = 'updated';
-        header("Location: index.php");
-        // --- AKHIR PERUBAHAN ---
+        header("Location: index.php"); // Path sudah benar
         exit;
     }
 
@@ -117,6 +143,8 @@ if (isset($_POST['update'])) {
     $data['nama'] = htmlspecialchars($_POST['nama']);
     $data['satuan'] = htmlspecialchars($_POST['satuan']);
     $data['harga'] = htmlspecialchars($_POST['harga']);
+    // TAMBAHAN 4: Simpan kodegudang jika ada error
+    $data['kodegudang'] = isset($_POST['kodegudang']) ? htmlspecialchars($_POST['kodegudang']) : $data['kodegudang'];
 }
 ?>
 <!DOCTYPE html>
@@ -126,7 +154,7 @@ if (isset($_POST['update'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Produk</title>
-    <link href="modul/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../modul/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <style>
@@ -470,15 +498,32 @@ if (isset($_POST['update'])) {
                         </div>
                     </div>
 
+                    <div class="row">
+                         <div class="col-md-6 mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-house-door icon"></i>Gudang (Opsional)
+                            </label>
+                            <select name="kodegudang" class="form-select">
+                                <option value="">-- Pilih Gudang --</option>
+                                <?php foreach ($gudang_options as $gudang): ?>
+                                    <option value="<?= htmlspecialchars($gudang['kodegudang']) ?>"
+                                        <?= ($data['kodegudang'] == $gudang['kodegudang']) ? "selected" : "" ?>>
+                                        <?= htmlspecialchars($gudang['namagudang']) ?> (<?= htmlspecialchars($gudang['kodegudang']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text">Pilih gudang tempat produk disimpan</div>
+                        </div>
+                    </div>
                     <div class="mb-4">
                         <label class="form-label">
                             <i class="bi bi-image icon"></i>Gambar Saat Ini
                         </label>
                         <div class="current-image-section">
                             <div class="text-center">
-                                <?php if (!empty($data['gambar'])): ?>
+                                <?php if (!empty($data['gambar']) && file_exists("../uploads/" . $data['gambar'])): ?>
                                     <div class="image-wrapper" id="currentImageWrapper">
-                                        <img src="uploads/<?= htmlspecialchars($data['gambar']) ?>"
+                                        <img src="../uploads/<?= htmlspecialchars($data['gambar']) ?>"
                                             class="img-preview"
                                             width="200"
                                             height="200"
@@ -589,9 +634,9 @@ if (isset($_POST['update'])) {
         </div>
     </div>
 
-    <script src="modul/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="modul/js/jquery.min.js"></script>
-    <script src="modul/js/edit.js"></script>
+    <script src="../modul/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../modul/js/jquery.min.js"></script>
+    <script src="../modul/js/edit.js"></script>
 </body>
 
 </html>

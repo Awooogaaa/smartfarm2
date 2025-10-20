@@ -1,14 +1,24 @@
 <?php 
-session_start(); // <-- TAMBAHKAN INI
-include "koneksi.php"; 
+session_start();
+// PERBAIKAN 1: Path ke koneksi.php (harus naik satu level)
+include "../koneksi.php"; 
 ?>
 <?php
+// TAMBAHAN 1: Mengambil data gudang untuk dropdown
+$gudang_result = mysqli_query($koneksi, "SELECT kodegudang, namagudang FROM gudang ORDER BY namagudang ASC");
+$gudang_options = mysqli_fetch_all($gudang_result, MYSQLI_ASSOC);
+
 $error = "";
 if (isset($_POST['simpan'])) {
     $kode   = trim($_POST['kode']);
     $nama   = trim($_POST['nama']);
     $satuan = trim($_POST['satuan']);
     $harga  = trim($_POST['harga']);
+    // TAMBAHAN 2: Mengambil kodegudang dari form
+    $kodegudang = trim($_POST['kodegudang']);
+    if (empty($kodegudang)) {
+        $kodegudang = NULL; // Set jadi NULL jika tidak dipilih
+    }
 
     // --- VALIDASI BARU: Cek panjang Kode dan Nama ---
     if (strlen($kode) > 20) {
@@ -53,17 +63,27 @@ if (isset($_POST['simpan'])) {
         if ($gambar != "") {
             // Membuat nama file unik untuk menghindari duplikasi
             $gambar_baru = uniqid() . '-' . $gambar;
-            move_uploaded_file($tmp, "uploads/" . $gambar_baru);
+            // PERBAIKAN 2: Path untuk upload file (harus naik satu level)
+            move_uploaded_file($tmp, "../uploads/" . $gambar_baru);
         } else {
             $gambar_baru = ""; // Jika tidak ada gambar
         }
+        
+        // TAMBAHAN 3: Menyiapkan kodegudang untuk query SQL
+        if ($kodegudang === NULL) {
+            $kodegudang_sql = "NULL";
+        } else {
+            // Keamanan dasar untuk string
+            $kodegudang_sql = "'" . mysqli_real_escape_string($koneksi, $kodegudang) . "'";
+        }
 
-        mysqli_query($koneksi, "INSERT INTO produk (kode, nama, satuan, harga, gambar)
-                                VALUES ('$kode', '$nama', '$satuan', '$harga', '$gambar_baru')");
+        // PERBAIKAN 3: Query INSERT ditambah kolom kodegudang
+        mysqli_query($koneksi, "INSERT INTO produk (kode, nama, satuan, harga, gambar, kodegudang)
+                                VALUES ('$kode', '$nama', '$satuan', '$harga', '$gambar_baru', $kodegudang_sql)");
         
         // --- UBAH INI ---
         $_SESSION['msg'] = 'success'; // Simpan pesan di session
-        header("Location: index.php"); // Redirect tanpa parameter
+        header("Location: index.php"); // Redirect tanpa parameter (sudah benar)
         // --- AKHIR PERUBAHAN ---
         exit;
     }
@@ -76,7 +96,7 @@ if (isset($_POST['simpan'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tambah Produk</title>
-    <link href="modul/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../modul/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <style>
@@ -354,7 +374,24 @@ if (isset($_POST['simpan'])) {
                             <div class="form-text">Harga minimal Rp 1, maksimal 10 digit</div>
                         </div>
                     </div>
-
+                    
+                    <div class="row">
+                         <div class="col-md-6 mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-house-door icon"></i>Gudang (Opsional)
+                            </label>
+                            <select name="kodegudang" class="form-select">
+                                <option value="">-- Pilih Gudang --</option>
+                                <?php foreach ($gudang_options as $gudang): ?>
+                                    <option value="<?= htmlspecialchars($gudang['kodegudang']) ?>"
+                                        <?= (isset($_POST['kodegudang']) && $_POST['kodegudang'] == $gudang['kodegudang']) ? "selected" : "" ?>>
+                                        <?= htmlspecialchars($gudang['namagudang']) ?> (<?= htmlspecialchars($gudang['kodegudang']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text">Pilih gudang tempat produk disimpan</div>
+                        </div>
+                    </div>
                     <div class="mb-4">
                         <label class="form-label">
                             <i class="bi bi-cloud-upload icon"></i>Gambar Produk (Opsional)
@@ -417,9 +454,9 @@ if (isset($_POST['simpan'])) {
         </div>
     </div>
 
-    <script src="modul/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="modul/js/jquery.min.js"></script>
-    <script src="modul/js/tambah.js"></script>
+    <script src="../modul/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../modul/js/jquery.min.js"></script>
+    <script src="../modul/js/tambah.js"></script>
 </body>
 
 </html>
