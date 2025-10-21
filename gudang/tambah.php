@@ -1,6 +1,59 @@
 <?php
 // /gudang/tambah.php
+
+// =========================================================================
+//  LANGKAH 1: PINDAHKAN SEMUA LOGIKA PEMROSESAN FORM KE ATAS
+// =========================================================================
+
+// Kita butuh session dan koneksi database SEBELUM logika apapun
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+// Panggil koneksi.php secara manual di sini
+include_once(__DIR__ . "/../koneksi.php"); 
+
+$error = "";
+// Blok ini (yang aslinya ada di baris 136) dipindahkan ke sini
+if (isset($_POST['simpan'])) {
+    $kodegudang = trim($_POST['kodegudang']);
+    $namagudang = trim($_POST['namagudang']);
+    $golongan   = trim($_POST['golongan']);
+    $keterangan = trim($_POST['keterangan']);
+
+    // Validasi
+    if (empty($kodegudang) || empty($namagudang)) {
+        $error = "Kode Gudang dan Nama Gudang wajib diisi!";
+    } elseif (strlen($kodegudang) > 10) {
+        $error = "Kode Gudang terlalu panjang! Maksimal 10 karakter.";
+    }
+
+    // Cek kode unik
+    if ($error == "") {
+        // Pastikan $koneksi ada (dari include_once di atas)
+        $cekKode = mysqli_query($koneksi, "SELECT kodegudang FROM gudang WHERE kodegudang='$kodegudang'");
+        if (mysqli_num_rows($cekKode) > 0) {
+            $error = "Kode Gudang sudah ada, gunakan kode lain!";
+        }
+    }
+
+    // Kalau tidak ada error → simpan
+    if ($error == "") {
+        mysqli_query($koneksi, "INSERT INTO gudang (kodegudang, namagudang, golongan, keterangan)
+                                VALUES ('$kodegudang', '$namagudang', '$golongan', '$keterangan')");
+        
+        $_SESSION['msg'] = 'success';
+        
+        // Panggilan header() SEKARANG AMAN karena belum ada HTML yang dikirim
+        header("Location: index.php");
+        exit; // Selalu 'exit' setelah redirect
+    }
+}
+
+// =========================================================================
+//  LANGKAH 2: SETELAH SEMUA LOGIKA SELESAI, BARU MULAI TAMPILAN (HTML)
+// =========================================================================
 $page_title = "Tambah Gudang";
+// File header.php sekarang aman untuk dipanggil
 include "../template/header.php";
 ?>
 
@@ -210,43 +263,12 @@ include "../template/header.php";
 </style>
 
 <?php
-$error = "";
-if (isset($_POST['simpan'])) {
-    $kodegudang = trim($_POST['kodegudang']);
-    $namagudang = trim($_POST['namagudang']);
-    $golongan   = trim($_POST['golongan']);
-    $keterangan = trim($_POST['keterangan']);
-
-    // Validasi
-    if (empty($kodegudang) || empty($namagudang)) {
-        $error = "Kode Gudang dan Nama Gudang wajib diisi!";
-    } elseif (strlen($kodegudang) > 10) {
-        $error = "Kode Gudang terlalu panjang! Maksimal 10 karakter.";
-    }
-
-    // Cek kode unik
-    if ($error == "") {
-        $cekKode = mysqli_query($koneksi, "SELECT kodegudang FROM gudang WHERE kodegudang='$kodegudang'");
-        if (mysqli_num_rows($cekKode) > 0) {
-            $error = "Kode Gudang sudah ada, gunakan kode lain!";
-        }
-    }
-
-    // Kalau tidak ada error → simpan
-    if ($error == "") {
-        mysqli_query($koneksi, "INSERT INTO gudang (kodegudang, namagudang, golongan, keterangan)
-                                VALUES ('$kodegudang', '$namagudang', '$golongan', '$keterangan')");
-        
-        $_SESSION['msg'] = 'success';
-        header("Location: index.php");
-        exit;
-    }
-}
+// BLOK PHP YANG SEBELUMNYA ADA DI SINI (BARIS 136) SUDAH DIHAPUS 
+// KARENA SUDAH DIPINDAH KE ATAS
 ?>
 
 <div class="page-wrapper">
     <div class="container-fluid px-4">
-        <!-- Page Header -->
         <div class="page-header">
             <h2><i class="bi bi-box-seam me-2" style="color: #17c1e8;"></i>Manajemen Gudang</h2>
             <a href="index.php" class="btn btn-back-clean">
@@ -254,7 +276,6 @@ if (isset($_POST['simpan'])) {
             </a>
         </div>
 
-        <!-- Form Section -->
         <div class="form-section">
             <div class="form-section-title">
                 <i class="bi bi-plus-circle me-2" style="color: #17c1e8;"></i>Tambah Gudang Baru
@@ -270,7 +291,6 @@ if (isset($_POST['simpan'])) {
 
             <form action="" method="POST">
                 <div class="row g-4">
-                    <!-- Kode Gudang -->
                     <div class="col-md-6">
                         <div class="form-group-spacing">
                             <label for="kodegudang" class="form-label-clean">
@@ -292,7 +312,6 @@ if (isset($_POST['simpan'])) {
                         </div>
                     </div>
 
-                    <!-- Nama Gudang -->
                     <div class="col-md-6">
                         <div class="form-group-spacing">
                             <label for="namagudang" class="form-label-clean">
@@ -311,7 +330,6 @@ if (isset($_POST['simpan'])) {
                         </div>
                     </div>
 
-                    <!-- Golongan -->
                     <div class="col-md-12">
                         <div class="form-group-spacing">
                             <label for="golongan" class="form-label-clean">
@@ -332,7 +350,6 @@ if (isset($_POST['simpan'])) {
                         </div>
                     </div>
 
-                    <!-- Keterangan -->
                     <div class="col-md-12">
                         <div class="form-group-spacing">
                             <label for="keterangan" class="form-label-clean">
@@ -348,7 +365,6 @@ if (isset($_POST['simpan'])) {
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
                     <div class="col-12">
                         <div class="d-flex justify-content-end gap-2 pt-3 border-top">
                             <a href="index.php" class="btn btn-light px-4">
