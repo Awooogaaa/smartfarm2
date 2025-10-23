@@ -1,32 +1,45 @@
 <?php
-$page_title="Kendaraan"; include "../template/header.php";
-$res = mysqli_query($koneksi, "SELECT * FROM kendaraan ORDER BY nopol DESC");
-?>
-<div class="d-flex justify-content-between mb-3"><h3>Kendaraan</h3><a class="btn btn-primary" href="tambah.php">Tambah</a></div>
-<table class="table"><thead><tr><th>Aksi</th><th>No. Pol</th><th>Nama</th><th>Jenis</th><th>Driver</th><th>Kontak</th><th>Tahun</th><th>Kapasitas</th><th>Foto</th></tr></thead><tbody>
-<?php while($r=mysqli_fetch_assoc($res)): ?>
-<tr>
-  <td><a class="btn btn-sm btn-warning" href="edit.php?nopol=<?=urlencode($r['nopol'])?>">Edit</a>
-      <a class="btn btn-sm btn-danger" href="index.php?delete=<?=urlencode($r['nopol'])?>" onclick="return confirm('Hapus?')">Hapus</a>
-  </td>
-  <td><?=htmlspecialchars($r['nopol'])?></td>
-  <td><?=htmlspecialchars($r['namakendaraan'])?></td>
-  <td><?=htmlspecialchars($r['jeniskendaraan'])?></td>
-  <td><?=htmlspecialchars($r['namadriver'])?></td>
-  <td><?=htmlspecialchars($r['kontakdriver'])?></td>
-  <td><?=htmlspecialchars($r['tahun'])?></td>
-  <td><?=htmlspecialchars($r['kapasitas'])?></td>
-  <td><?php if($r['foto'] && file_exists(__DIR__ . "/../uploads/".$r['foto'])) echo "<img src='../uploads/".htmlspecialchars($r['foto'])."' style='width:60px;height:60px;object-fit:cover'>"; else echo "No Img";?></td>
-</tr>
-<?php endwhile; ?>
-</tbody></table>
-<?php
+include "../koneksi.php";
+
+// Hapus
 if (isset($_GET['delete'])) {
-  $nopol = mysqli_real_escape_string($koneksi, $_GET['delete']);
-  $g = mysqli_fetch_assoc(mysqli_query($koneksi,"SELECT foto FROM kendaraan WHERE nopol='$nopol'"));
-  if ($g && !empty($g['foto']) && file_exists(__DIR__ . "/../uploads/".$g['foto'])) unlink(__DIR__ . "/../uploads/".$g['foto']);
-  mysqli_query($koneksi,"DELETE FROM kendaraan WHERE nopol='$nopol'");
-  header("Location:index.php"); exit;
+    $id = $_GET['delete'];
+    mysqli_query($koneksi, "DELETE FROM kendaraan WHERE nokendaraan='$id'");
+    header("Location: index.php");
+    exit;
 }
-include "../template/footer.php";
+
+$q = mysqli_query($koneksi, "SELECT * FROM kendaraan ORDER BY nokendaraan ASC");
+include "../template/header.php";
 ?>
+
+<div class="container mt-4">
+    <h3>Data Kendaraan</h3>
+    <a href="tambah.php" class="btn btn-primary mb-3">+ Tambah Kendaraan</a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>No. Kendaraan</th>
+                <th>Jenis Kendaraan</th>
+                <th>Kapasitas (Kg)</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php while($d = mysqli_fetch_assoc($q)) { ?>
+            <tr>
+                <td><?= $d['nokendaraan']; ?></td>
+                <td><?= $d['jeniskendaraan']; ?></td>
+                <td><?= number_format($d['kapasitas']); ?></td>
+                <td>
+                    <a href="edit.php?id=<?= $d['nokendaraan']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                    <a onclick="return confirm('Hapus kendaraan?')" href="index.php?delete=<?= $d['nokendaraan']; ?>" class="btn btn-danger btn-sm">Hapus</a>
+                </td>
+            </tr>
+        <?php } ?>
+        </tbody>
+    </table>
+</div>
+
+<?php include "../template/footer.php"; ?>
