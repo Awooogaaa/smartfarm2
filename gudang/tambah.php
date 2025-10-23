@@ -17,15 +17,25 @@ $error = "";
 if (isset($_POST['simpan'])) {
     $kodegudang = trim($_POST['kodegudang']);
     $namagudang = trim($_POST['namagudang']);
-    $golongan   = trim($_POST['golongan']);
-    $keterangan = trim($_POST['keterangan']);
+    // PERBAIKAN: Mengambil data yang sesuai dengan kolom DB
+    $alamat     = trim($_POST['alamat']);
+    $kontak     = trim($_POST['kontak']);
+    $kapasitas  = (double)$_POST['kapasitas'];
+    
 
     // Validasi
     if (empty($kodegudang) || empty($namagudang)) {
         $error = "Kode Gudang dan Nama Gudang wajib diisi!";
-    } elseif (strlen($kodegudang) > 10) {
-        $error = "Kode Gudang terlalu panjang! Maksimal 10 karakter.";
+    } elseif (strlen($kodegudang) > 20) { // Max 20 di skema DB
+        $error = "Kode Gudang terlalu panjang! Maksimal 20 karakter.";
+    } elseif (strlen($namagudang) > 100) { // Max 100 di skema DB
+        $error = "Nama Gudang terlalu panjang! Maksimal 100 karakter.";
+    } elseif (strlen($kontak) > 50) { // Max 50 di skema DB
+        $error = "Kontak terlalu panjang! Maksimal 50 karakter.";
+    } elseif (strlen($alamat) > 200) { // Max 200 di skema DB
+        $error = "Alamat terlalu panjang! Maksimal 200 karakter.";
     }
+
 
     // Cek kode unik
     if ($error == "") {
@@ -38,8 +48,12 @@ if (isset($_POST['simpan'])) {
 
     // Kalau tidak ada error → simpan
     if ($error == "") {
-        mysqli_query($koneksi, "INSERT INTO gudang (kodegudang, namagudang, golongan, keterangan)
-                                VALUES ('$kodegudang', '$namagudang', '$golongan', '$keterangan')");
+        // PERBAIKAN: Menggunakan kolom yang benar dan memasukkan semua data yang diinput
+        $alamat_sql = mysqli_real_escape_string($koneksi, $alamat);
+        $kontak_sql = mysqli_real_escape_string($koneksi, $kontak);
+        
+        mysqli_query($koneksi, "INSERT INTO gudang (kodegudang, namagudang, alamat, kontak, kapasitas)
+                                VALUES ('$kodegudang', '$namagudang', '$alamat_sql', '$kontak_sql', $kapasitas)");
         
         $_SESSION['msg'] = 'success';
         
@@ -302,12 +316,12 @@ include "../template/header.php";
                                        id="kodegudang" 
                                        class="form-control form-control-clean" 
                                        value="<?= isset($_POST['kodegudang']) ? htmlspecialchars($_POST['kodegudang']) : '' ?>" 
-                                       maxlength="10" 
+                                       maxlength="20" 
                                        required 
-                                       placeholder="Contoh: G-001">
+                                       placeholder="Maksimal 20 karakter">
                             </div>
                             <small class="form-text-clean">
-                                <i class="bi bi-info-circle me-1"></i>Maksimal 10 karakter, harus unik
+                                <i class="bi bi-info-circle me-1"></i>Maksimal 20 karakter, harus unik
                             </small>
                         </div>
                     </div>
@@ -325,42 +339,64 @@ include "../template/header.php";
                                        value="<?= isset($_POST['namagudang']) ? htmlspecialchars($_POST['namagudang']) : '' ?>" 
                                        maxlength="100" 
                                        required 
-                                       placeholder="Contoh: Gudang Utama">
+                                       placeholder="Maksimal 100 karakter">
                             </div>
                         </div>
                     </div>
-
-                    <div class="col-md-12">
+                    
+                    <div class="col-md-6">
                         <div class="form-group-spacing">
-                            <label for="golongan" class="form-label-clean">
-                                Golongan / Kategori
+                            <label for="kontak" class="form-label-clean">
+                                Kontak
                             </label>
                             <div class="input-group-clean">
                                 <input type="text" 
-                                       name="golongan" 
-                                       id="golongan" 
+                                       name="kontak" 
+                                       id="kontak" 
                                        class="form-control form-control-clean" 
-                                       value="<?= isset($_POST['golongan']) ? htmlspecialchars($_POST['golongan']) : '' ?>" 
+                                       value="<?= isset($_POST['kontak']) ? htmlspecialchars($_POST['kontak']) : '' ?>" 
                                        maxlength="50" 
-                                       placeholder="Contoh: Bahan Baku, Produk Jadi, Alat">
+                                       placeholder="Contoh: 0812xxxxxx (Maks. 50 karakter)">
                             </div>
                             <small class="form-text-clean">
-                                <i class="bi bi-lightbulb me-1"></i>Opsional - untuk mengelompokkan gudang
+                                <i class="bi bi-telephone me-1"></i>Nama atau Nomor Telepon yang dapat dihubungi.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group-spacing">
+                            <label for="kapasitas" class="form-label-clean">
+                                Kapasitas (Kg/Pcs)
+                            </label>
+                            <div class="input-group-clean">
+                                <input type="number" 
+                                       name="kapasitas" 
+                                       id="kapasitas" 
+                                       class="form-control form-control-clean" 
+                                       value="<?= isset($_POST['kapasitas']) ? htmlspecialchars($_POST['kapasitas']) : '0' ?>" 
+                                       min="0"
+                                       required 
+                                       placeholder="Contoh: 1000">
+                            </div>
+                            <small class="form-text-clean">
+                                <i class="bi bi-rulers me-1"></i>Total kapasitas penyimpanan gudang (diisi angka).
                             </small>
                         </div>
                     </div>
 
                     <div class="col-md-12">
                         <div class="form-group-spacing">
-                            <label for="keterangan" class="form-label-clean">
-                                Keterangan
+                            <label for="alamat" class="form-label-clean">
+                                Alamat
                             </label>
                             <div class="input-group-clean">
-                                <textarea name="keterangan" 
-                                          id="keterangan" 
+                                <textarea name="alamat" 
+                                          id="alamat" 
                                           class="form-control form-control-clean" 
                                           rows="4" 
-                                          placeholder="Tambahkan catatan atau informasi tambahan tentang gudang ini..."><?= isset($_POST['keterangan']) ? htmlspecialchars($_POST['keterangan']) : '' ?></textarea>
+                                          maxlength="200"
+                                          placeholder="Alamat lengkap gudang (Maks. 200 karakter)"><?= isset($_POST['alamat']) ? htmlspecialchars($_POST['alamat']) : '' ?></textarea>
                             </div>
                         </div>
                     </div>

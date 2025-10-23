@@ -331,23 +331,23 @@ $searchTerm = "";
 if (isset($_GET['cari']) && trim($_GET['cari']) != "") {
     $searchTerm = trim($_GET['cari']);
     $cari = mysqli_real_escape_string($koneksi, $searchTerm);
-    // PERBAIKAN: Menambahkan g.golongan ke pencarian
-    $where = "WHERE p.kode LIKE '%$cari%' OR p.nama LIKE '%$cari%' OR p.satuan LIKE '%$cari%' OR g.namagudang LIKE '%$cari%' OR g.golongan LIKE '%$cari%'";
+    // PERBAIKAN: Menghapus g.golongan dari pencarian
+    $where = "WHERE p.kodeproduk LIKE '%$cari%' OR p.nama LIKE '%$cari%' OR p.satuan LIKE '%$cari%' OR g.namagudang LIKE '%$cari%'";
 }
 
-// PERBAIKAN: JOIN dengan tabel gudang dan SELECT g.golongan
-$countQuery = mysqli_query($koneksi, "SELECT COUNT(kodeproduk) as total 
+// PERBAIKAN: Menghapus g.golongan dari SELECT COUNT
+$countQuery = mysqli_query($koneksi, "SELECT COUNT(p.kodeproduk) as total 
                                       FROM produk p 
-                                      LEFT JOIN gudang g ON kodegudang = g.kodegudang 
+                                      LEFT JOIN gudang g ON p.kodegudang = g.kodegudang 
                                       $where");
 $totalData = mysqli_fetch_assoc($countQuery)['total'];
 $totalPages = ($limit > 0) ? ceil($totalData / $limit) : 1; // Hindari division by zero jika limit 0
 $totalPages = max(1, $totalPages); // Pastikan minimal 1 halaman
 
-// PERBAIKAN: JOIN dengan tabel gudang dan SELECT g.golongan
-$result = mysqli_query($koneksi, "SELECT p.*, g.namagudang, g.golongan 
+// PERBAIKAN: Menghapus g.golongan dari SELECT
+$result = mysqli_query($koneksi, "SELECT p.*, g.namagudang
                                   FROM produk p 
-                                  LEFT JOIN gudang g ON kodegudang = g.kodegudang 
+                                  LEFT JOIN gudang g ON p.kodegudang = g.kodegudang 
                                   $where 
                                   ORDER BY kodeproduk DESC 
                                   LIMIT $limit OFFSET $offset");
@@ -480,7 +480,7 @@ $totalProduk = mysqli_fetch_assoc($countAll)['total'];
                 <th scope="col">Kode</th>
                 <th scope="col">Nama Produk</th>
                 <th scope="col">Gudang</th> 
-                <th scope="col">Golongan</th> <th scope="col">Satuan</th>
+                <th scope="col">Satuan</th>
                 <th scope="col">Harga</th>
               </tr>
             </thead>
@@ -491,7 +491,7 @@ $totalProduk = mysqli_fetch_assoc($countAll)['total'];
                 while ($row = mysqli_fetch_assoc($result)) {
                   echo "<tr>
                         <td class='text-center'>
-                            <a href='edit.php?id=" . $row['id'] . "' class='btn btn-edit btn-sm' title='Edit Produk'> 
+                            <a href='edit.php?kode=" . urlencode($row['kodeproduk']) . "' class='btn btn-edit btn-sm' title='Edit Produk'> 
                                 <i class='bi bi-pencil-square'></i>
                             </a>
                         </td>
@@ -511,7 +511,7 @@ $totalProduk = mysqli_fetch_assoc($countAll)['total'];
                   }
 
                   echo "</td>
-                        <td><span class='product-code'>" . htmlspecialchars($row['kode']) . "</span></td>
+                        <td><span class='product-code'>" . htmlspecialchars($row['kodeproduk']) . "</span></td>
                         <td class='fw-bold'>" . htmlspecialchars($row['nama']) . "</td>";
                   
                   // Menampilkan Nama Gudang
@@ -523,23 +523,15 @@ $totalProduk = mysqli_fetch_assoc($countAll)['total'];
                   }
                   echo "</td>";
 
-                  // Menampilkan Golongan Gudang (BARU)
-                   echo "<td>";
-                   if (!empty($row['golongan'])) {
-                       echo "<span class='golongan-badge'>" . htmlspecialchars($row['golongan']) . "</span>";
-                   } else {
-                        // Jika gudang tdk diatur, golongan jg tdk ada
-                       echo "<span class='badge bg-secondary'>-</span>"; 
-                   }
-                   echo "</td>";
+                  // PERBAIKAN: Kolom Golongan dihapus
                   
                   echo "<td><span class='unit-badge'>" . htmlspecialchars($row['satuan']) . "</span></td>
                         <td><span class='price-badge'>Rp " . number_format($row['harga'], 0, ',', '.') . "</span></td>
                       </tr>";
                 }
               } else {
-                // Perbaikan colspan menjadi 8
-                echo "<tr><td colspan='8' class='text-center p-5 text-muted'><i>Tidak ada produk yang ditemukan.</i></td></tr>"; 
+                // PERBAIKAN: Colspan disesuaikan dari 8 menjadi 7
+                echo "<tr><td colspan='7' class='text-center p-5 text-muted'><i>Tidak ada produk yang ditemukan.</i></td></tr>"; 
               }
               ?>
             </tbody>

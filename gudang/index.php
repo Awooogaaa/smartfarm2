@@ -414,12 +414,14 @@ $searchTerm = "";
 if (isset($_GET['cari']) && trim($_GET['cari']) != "") {
     $searchTerm = trim($_GET['cari']);
     $cari = mysqli_real_escape_string($koneksi, $searchTerm);
-    $where = "WHERE kodegudang LIKE '%$cari%' OR namagudang LIKE '%$cari%' OR golongan LIKE '%$cari%'";
+    // PERBAIKAN: Menambahkan kolom 'alamat' dan 'kontak' ke pencarian. Menghapus 'golongan'
+    $where = "WHERE kodegudang LIKE '%$cari%' OR namagudang LIKE '%$cari%' OR alamat LIKE '%$cari%' OR kontak LIKE '%$cari%'";
 }
 
 $countQuery = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM gudang $where");
 $totalData = mysqli_fetch_assoc($countQuery)['total'];
 $totalPages = ceil($totalData / $limit);
+// MENGGUNAKAN SELECT * - AMAN
 $result = mysqli_query($koneksi, "SELECT * FROM gudang $where ORDER BY namagudang ASC LIMIT $limit OFFSET $offset");
 $countAll = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM gudang");
 $totalGudang = mysqli_fetch_assoc($countAll)['total'];
@@ -447,7 +449,6 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
 
 <div class="page-wrapper">
     <div class="container-fluid px-4">
-        <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-center gy-3">
                 <div class="col-lg-6">
@@ -464,7 +465,7 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
                             <input type="text" 
                                    class="search-input" 
                                    name="cari" 
-                                   placeholder="Cari gudang, kode..." 
+                                   placeholder="Cari gudang, alamat, kontak..." 
                                    value="<?= htmlspecialchars($searchTerm) ?>">
                         </div>
                         <button type="submit" class="btn-cyan">
@@ -481,9 +482,7 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
             </div>
         </div>
 
-        <!-- Main Card -->
         <div class="main-card">
-            <!-- Toolbar -->
             <div class="card-toolbar">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div class="d-flex align-items-center gap-3">
@@ -514,7 +513,6 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
                 </div>
             </div>
 
-            <!-- Table -->
             <div class="table-wrapper">
                 <table class="table-modern">
                     <thead>
@@ -522,14 +520,20 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
                             <th style="width: 80px;">Aksi</th>
                             <th style="width: 150px;">Kode</th>
                             <th>Nama Gudang</th>
-                            <th style="width: 180px;">Golongan</th>
-                            <th>Keterangan</th>
+                            <th style="width: 180px;">Kontak</th>
+                            <th>Alamat</th>
+                            <th style="width: 100px;">Kapasitas</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
                         if ($result && mysqli_num_rows($result) > 0) {
                             while ($row = mysqli_fetch_assoc($result)) {
+                                
+                                // PERBAIKAN: Akses langsung ke kolom yang ada di DB
+                                $kontak_display = htmlspecialchars($row['kontak']);
+                                $alamat_display = htmlspecialchars($row['alamat']);
+
                                 echo "<tr>
                                     <td class='text-center'>
                                         <a href='edit.php?kode=" . htmlspecialchars($row['kodegudang']) . "' 
@@ -542,13 +546,17 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
                                         <span class='badge-code'>" . htmlspecialchars($row['kodegudang']) . "</span>
                                     </td>
                                     <td style='font-weight: 600;'>" . htmlspecialchars($row['namagudang']) . "</td>
-                                    <td>" . ($row['golongan'] ? "<span class='badge-category'>" . htmlspecialchars($row['golongan']) . "</span>" : "<span style='color: #cbd5e0;'>-</span>") . "</td>
-                                    <td style='color: #718096;'>" . (htmlspecialchars($row['keterangan']) ?: "<span style='color: #cbd5e0;'>-</span>") . "</td>
+                                    
+                                    <td>" . (!empty($kontak_display) ? "<span class='badge-category'>" . $kontak_display . "</span>" : "<span style='color: #cbd5e0;'>-</span>") . "</td>
+                                    
+                                    <td style='color: #718096;'>" . (!empty($alamat_display) ? $alamat_display : "<span style='color: #cbd5e0;'>-</span>") . "</td>
+                                    
+                                    <td>" . number_format($row['kapasitas']) . "</td>
                                 </tr>";
                             }
                         } else {
                             echo "<tr>
-                                <td colspan='5'>
+                                <td colspan='6'>
                                     <div class='empty-state'>
                                         <div class='empty-state-icon'>
                                             <i class='bi bi-inbox'></i>
@@ -564,7 +572,6 @@ $totalGudang = mysqli_fetch_assoc($countAll)['total'];
                 </table>
             </div>
 
-            <!-- Pagination -->
             <?php if ($totalPages > 0): ?>
             <div class="pagination-wrapper">
                 <div class="pagination-info">

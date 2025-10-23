@@ -37,7 +37,8 @@ if (isset($_POST['simpan'])) {
 
     // Cek kode unik
     if ($error == "") {
-        $cekKode = mysqli_query($koneksi, "SELECT id FROM produk WHERE kode='$kode'");
+        // PERBAIKAN UTAMA: Mengganti 'id' dan 'kode' dengan 'kodeproduk'
+        $cekKode = mysqli_query($koneksi, "SELECT kodeproduk FROM produk WHERE kodeproduk='$kode'");
         if (mysqli_num_rows($cekKode) > 0) {
             $error = "Kode produk sudah ada, gunakan kode lain!";
         }
@@ -77,8 +78,8 @@ if (isset($_POST['simpan'])) {
             $kodegudang_sql = "'" . mysqli_real_escape_string($koneksi, $kodegudang) . "'";
         }
 
-        // PERBAIKAN 3: Query INSERT ditambah kolom kodegudang
-        mysqli_query($koneksi, "INSERT INTO produk (kode, nama, satuan, harga, gambar, kodegudang)
+        // PERBAIKAN 3: Query INSERT menggunakan kolom kodeproduk
+        mysqli_query($koneksi, "INSERT INTO produk (kodeproduk, nama, satuan, harga, gambar, kodegudang)
                                 VALUES ('$kode', '$nama', '$satuan', '$harga', '$gambar_baru', $kodegudang_sql)");
         
         // --- UBAH INI ---

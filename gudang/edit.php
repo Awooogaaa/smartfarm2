@@ -1,7 +1,104 @@
 <?php
 // /gudang/edit.php
+
+// === START LOGIKA PEMROSESAN DATA (HARUS DI ATAS) ===
+
+// Pastikan session dimulai
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+include "../koneksi.php";
+
+$error = "";
+
+// 1. Ambil KODE dari URL
+if (!isset($_GET['kode'])) {
+    header("Location: index.php");
+    exit;
+}
+$kode_gudang_url = mysqli_real_escape_string($koneksi, $_GET['kode']); // Kode lama (Original PK)
+
+// 2. Update logic (Harus diletakkan sebelum fetch data jika post gagal)
+if (isset($_POST['update'])) {
+    // Kode gudang tidak bisa diubah (Primary Key), jadi kita ambil dari data yang ada
+    $kodegudang = $kode_gudang_url; // Tetap menggunakan kode dari GET
+    
+    $namagudang = trim($_POST['namagudang']);
+    $kontak 	= trim($_POST['kontak']);
+    $alamat 	= trim($_POST['alamat']);
+    $kapasitas 	= (double)$_POST['kapasitas'];
+    
+    // Validasi
+    if (empty($namagudang)) {
+        $error = "Nama Gudang wajib diisi!";
+    } elseif (strlen($namagudang) > 100) { 
+        $error = "Nama Gudang terlalu panjang! Maksimal 100 karakter.";
+    } elseif (strlen($kontak) > 50) { 
+        $error = "Kontak terlalu panjang! Maksimal 50 karakter.";
+    } elseif (strlen($alamat) > 200) { 
+        $error = "Alamat terlalu panjang! Maksimal 200 karakter.";
+    }
+
+    if ($error == "") {
+        $namagudang_sql = mysqli_real_escape_string($koneksi, $namagudang);
+        $kontak_sql = mysqli_real_escape_string($koneksi, $kontak);
+        $alamat_sql = mysqli_real_escape_string($koneksi, $alamat);
+
+        // Query UPDATE tanpa mengubah kodegudang
+        $query = "UPDATE gudang SET 
+                    namagudang='$namagudang_sql', 
+                    kontak='$kontak_sql', 
+                    alamat='$alamat_sql',
+                    kapasitas=$kapasitas 
+                  WHERE kodegudang='$kodegudang'";
+        mysqli_query($koneksi, $query);
+
+        $_SESSION['msg'] = 'updated';
+        
+        // REDIRECT BERHASIL (di atas output HTML)
+        header("Location: index.php"); 
+        exit;
+    }
+}
+
+// 3. Delete logic (Juga harus di atas output HTML)
+if (isset($_POST['delete'])) {
+    // Cek dulu apakah gudang dipakai oleh produk
+    $cekProduk = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM produk WHERE kodegudang='$kode_gudang_url'");
+    $totalProduk = mysqli_fetch_assoc($cekProduk)['total'];
+
+    if ($totalProduk > 0) {
+        $error = "Tidak bisa menghapus gudang! Masih ada $totalProduk produk yang terdaftar di gudang ini.";
+    } else {
+        mysqli_query($koneksi, "DELETE FROM gudang WHERE kodegudang='$kode_gudang_url'");
+        $_SESSION['msg'] = 'deleted';
+        // REDIRECT BERHASIL (di atas output HTML)
+        header("Location: index.php");
+        exit;
+    }
+}
+
+// 4. Ambil data gudang yang akan diedit (setelah update/delete, sebelum HTML)
+$result = mysqli_query($koneksi, "SELECT * FROM gudang WHERE kodegudang='$kode_gudang_url'");
+$data = mysqli_fetch_assoc($result);
+if (!$data) {
+    header("Location: index.php");
+    exit;
+}
+
+// Jika ada error dari POST, data di-override agar input user tidak hilang
+if (isset($_POST['update']) && $error != "") {
+    $data['namagudang'] = htmlspecialchars($_POST['namagudang']);
+    $data['kontak'] = htmlspecialchars($_POST['kontak']);
+    $data['alamat'] = htmlspecialchars($_POST['alamat']);
+    $data['kapasitas'] = htmlspecialchars($_POST['kapasitas']);
+}
+
+// === END LOGIKA PEMROSESAN DATA ===
+
+// === START OUTPUT HTML ===
 $page_title = "Edit Gudang";
-include "../template/header.php";
+include "../template/header.php"; // Output HTML dimulai di sini (aman)
 ?>
 
 <style>
@@ -226,7 +323,7 @@ include "../template/header.php";
     right: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #cbd5e0;
+    color: #a0aec0; /* Ubah warna agar terlihat seperti terkunci */
     pointer-events: none;
 }
 
@@ -341,72 +438,8 @@ include "../template/header.php";
 }
 </style>
 
-<?php
-$error = "";
-
-// Ambil KODE dari URL
-if (!isset($_GET['kode'])) {
-    header("Location: index.php");
-    exit;
-}
-$kode_gudang_url = $_GET['kode'];
-
-// Hapus gudang
-if (isset($_POST['delete'])) {
-    // Cek dulu apakah gudang dipakai oleh produk
-    $cekProduk = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM produk WHERE kodegudang='$kode_gudang_url'");
-    $totalProduk = mysqli_fetch_assoc($cekProduk)['total'];
-
-    if ($totalProduk > 0) {
-        $error = "Tidak bisa menghapus gudang! Masih ada $totalProduk produk yang terdaftar di gudang ini.";
-    } else {
-        mysqli_query($koneksi, "DELETE FROM gudang WHERE kodegudang='$kode_gudang_url'");
-        $_SESSION['msg'] = 'deleted';
-        header("Location: index.php");
-        exit;
-    }
-}
-
-// Ambil data gudang yang akan diedit
-$result = mysqli_query($koneksi, "SELECT * FROM gudang WHERE kodegudang='$kode_gudang_url'");
-$data = mysqli_fetch_assoc($result);
-if (!$data) {
-    header("Location: index.php");
-    exit;
-}
-
-// Update gudang
-if (isset($_POST['update'])) {
-    // Kode gudang tidak bisa diubah (Primary Key), jadi kita ambil dari data yang ada
-    $kodegudang = $data['kodegudang'];
-    $namagudang = trim($_POST['namagudang']);
-    $golongan   = trim($_POST['golongan']);
-    $keterangan = trim($_POST['keterangan']);
-
-    if (empty($namagudang)) {
-        $error = "Nama Gudang wajib diisi!";
-    }
-
-    if ($error == "") {
-        $query = "UPDATE gudang SET namagudang='$namagudang', golongan='$golongan', keterangan='$keterangan' 
-                  WHERE kodegudang='$kodegudang'";
-        mysqli_query($koneksi, $query);
-
-        $_SESSION['msg'] = 'updated';
-        header("Location: index.php");
-        exit;
-    }
-
-    // Jika ada error, data yang diinput tetap ditampilkan di form
-    $data['namagudang'] = htmlspecialchars($_POST['namagudang']);
-    $data['golongan'] = htmlspecialchars($_POST['golongan']);
-    $data['keterangan'] = htmlspecialchars($_POST['keterangan']);
-}
-?>
-
 <div class="page-wrapper">
     <div class="container-fluid px-4">
-        <!-- Page Header -->
         <div class="page-header">
             <div>
                 <h1 class="page-title">
@@ -420,7 +453,6 @@ if (isset($_POST['update'])) {
             </a>
         </div>
 
-        <!-- Form Section -->
         <div class="form-section">
             <?php if ($error != ""): ?>
                 <div class="alert alert-clean alert-danger alert-dismissible fade show" role="alert">
@@ -432,7 +464,6 @@ if (isset($_POST['update'])) {
 
             <form action="" method="POST">
                 <div class="row g-4">
-                    <!-- Kode Gudang (Locked) -->
                     <div class="col-md-6">
                         <div class="form-group-spacing">
                             <label for="kodegudang" class="form-label-clean">
@@ -453,7 +484,6 @@ if (isset($_POST['update'])) {
                         </div>
                     </div>
 
-                    <!-- Nama Gudang -->
                     <div class="col-md-6">
                         <div class="form-group-spacing">
                             <label for="namagudang" class="form-label-clean">
@@ -473,43 +503,60 @@ if (isset($_POST['update'])) {
                         </div>
                     </div>
 
-                    <!-- Golongan -->
-                    <div class="col-md-12">
+                    <div class="col-md-6">
                         <div class="form-group-spacing">
-                            <label for="golongan" class="form-label-clean">
-                                Golongan / Kategori
+                            <label for="kontak" class="form-label-clean">
+                                Kontak
                             </label>
                             <input type="text" 
-                                   name="golongan" 
-                                   id="golongan" 
+                                   name="kontak" 
+                                   id="kontak" 
                                    class="form-control form-control-clean" 
-                                   value="<?= htmlspecialchars($data['golongan']) ?>" 
+                                   value="<?= htmlspecialchars($data['kontak']) ?>" 
                                    maxlength="50" 
-                                   placeholder="Contoh: Bahan Baku, Produk Jadi">
+                                   placeholder="Nomor telepon/kontak gudang">
                             <small class="form-text-clean">
-                                <i class="bi bi-lightbulb me-1"></i>Opsional - untuk mengelompokkan gudang
+                                <i class="bi bi-telephone me-1"></i>Nomor kontak gudang (Maks. 50 karakter).
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group-spacing">
+                            <label for="kapasitas" class="form-label-clean">
+                                Kapasitas (Kg/Pcs)
+                            </label>
+                            <input type="number" 
+                                   name="kapasitas" 
+                                   id="kapasitas" 
+                                   class="form-control form-control-clean" 
+                                   value="<?= $data['kapasitas'] ?>" 
+                                   min="0"
+                                   required 
+                                   placeholder="Total kapasitas gudang">
+                            <small class="form-text-clean">
+                                <i class="bi bi-rulers me-1"></i>Total kapasitas penyimpanan gudang.
                             </small>
                         </div>
                     </div>
 
-                    <!-- Keterangan -->
                     <div class="col-md-12">
                         <div class="form-group-spacing">
-                            <label for="keterangan" class="form-label-clean">
-                                Keterangan
+                            <label for="alamat" class="form-label-clean">
+                                Alamat
                             </label>
-                            <textarea name="keterangan" 
-                                      id="keterangan" 
+                            <textarea name="alamat" 
+                                      id="alamat" 
                                       class="form-control form-control-clean" 
                                       rows="4" 
-                                      placeholder="Tambahkan keterangan atau deskripsi gudang..."><?= htmlspecialchars($data['keterangan']) ?></textarea>
+                                      maxlength="200"
+                                      placeholder="Alamat lengkap gudang (Maks. 200 karakter)"><?= htmlspecialchars($data['alamat']) ?></textarea>
                             <small class="form-text-clean">
-                                <i class="bi bi-file-text me-1"></i>Opsional - deskripsi tambahan tentang gudang
+                                <i class="bi bi-geo-alt me-1"></i>Alamat lengkap gudang.
                             </small>
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top form-section-actions" style="border-color: #f0f4f8 !important;">
                             <button type="button" 
@@ -534,7 +581,6 @@ if (isset($_POST['update'])) {
     </div>
 </div>
 
-<!-- Modal Konfirmasi Hapus -->
 <div class="modal fade modal-modern" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

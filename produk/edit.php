@@ -10,23 +10,28 @@ $gudang_options = mysqli_fetch_all($gudang_result, MYSQLI_ASSOC);
 
 $error = "";
 
-// Ambil ID dari URL
-if (!isset($_GET['id'])) {
+// Ambil KODE dari URL (Menggunakan 'kode' yang merujuk ke kodeproduk)
+if (!isset($_GET['kode'])) {
     header("Location: index.php"); // Path sudah benar
     exit;
 }
-$id = $_GET['id'];
+// PERBAIKAN: Menggunakan $kode_produk sebagai identifier
+$kode_produk = mysqli_real_escape_string($koneksi, $_GET['kode']);
 
 // Hapus produk
 if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
-    $result = mysqli_query($koneksi, "SELECT gambar FROM produk WHERE id=$delete_id");
-    $row = mysqli_fetch_assoc($result);
+    // PERBAIKAN: Menggunakan $kode_produk dari URL
+    $delete_kode = mysqli_real_escape_string($koneksi, $_GET['delete']);
+    // Ambil info gambar dari kode produk yang akan dihapus
+    $result_to_delete = mysqli_query($koneksi, "SELECT gambar FROM produk WHERE kodeproduk='$delete_kode'");
+    $row_to_delete = mysqli_fetch_assoc($result_to_delete);
+    
     // PERBAIKAN 2: Path untuk unlink file diubah
-    if ($row && !empty($row['gambar']) && file_exists("../uploads/" . $row['gambar'])) {
-        unlink("../uploads/" . $row['gambar']);
+    if ($row_to_delete && !empty($row_to_delete['gambar']) && file_exists("../uploads/" . $row_to_delete['gambar'])) {
+        unlink("../uploads/" . $row_to_delete['gambar']);
     }
-    mysqli_query($koneksi, "DELETE FROM produk WHERE id=$delete_id");
+    // PERBAIKAN: Menggunakan kodeproduk
+    mysqli_query($koneksi, "DELETE FROM produk WHERE kodeproduk='$delete_kode'");
 
     $_SESSION['msg'] = 'deleted';
     header("Location: index.php"); // Path sudah benar
@@ -34,19 +39,22 @@ if (isset($_GET['delete'])) {
 }
 
 // Ambil data produk yang akan diedit
-$result = mysqli_query($koneksi, "SELECT * FROM produk WHERE id=$id");
+// PERBAIKAN: Menggunakan kodeproduk di klausa WHERE
+$result = mysqli_query($koneksi, "SELECT * FROM produk WHERE kodeproduk='$kode_produk'");
 $data = mysqli_fetch_assoc($result);
 if (!$data) {
-    header("Location: index.php"); // Path sudah benar
+    header("Location: index.php");
     exit;
 }
 
 // Update produk
 if (isset($_POST['update'])) {
-    $kode   = trim($_POST['kode']);
+    // Kode produk baru yang di-input user. Ini bisa berbeda dari $kode_produk lama.
+    $kode_baru = trim($_POST['kode']); 
     $nama   = trim($_POST['nama']);
     $satuan = trim($_POST['satuan']);
     $harga  = trim($_POST['harga']);
+    
     // TAMBAHAN 2: Mengambil kodegudang dari form
     $kodegudang = trim($_POST['kodegudang']);
     if (empty($kodegudang)) {
@@ -54,7 +62,7 @@ if (isset($_POST['update'])) {
     }
 
     // Validasi panjang Kode dan Nama
-    if (strlen($kode) > 20) {
+    if (strlen($kode_baru) > 20) {
         $error = "Kode produk terlalu panjang! Maksimal 20 karakter.";
     } elseif (strlen($nama) > 100) {
         $error = "Nama produk terlalu panjang! Maksimal 100 karakter.";
@@ -67,28 +75,32 @@ if (isset($_POST['update'])) {
         $error = "Harga terlalu besar!";
     }
 
-    // Cek kode unik
+    // Cek kode unik (jika kode diubah)
     if ($error == "") {
-        $cekKode = mysqli_query($koneksi, "SELECT id FROM produk WHERE kode='$kode' AND id!=$id");
+        // PERBAIKAN: Cek duplikasi menggunakan kodeproduk dan mengabaikan kodeproduk yang sedang diedit ($kode_produk lama)
+        $cekKode = mysqli_query($koneksi, "SELECT kodeproduk FROM produk WHERE kodeproduk='$kode_baru' AND kodeproduk!='$kode_produk'");
         if (mysqli_num_rows($cekKode) > 0) {
             $error = "Kode produk sudah digunakan oleh produk lain!";
         }
     }
-
-    // Validasi gambar baru
-    if ($error == "" && $_FILES['gambar']['name'] != "") {
-        $gambar_baru = $_FILES['gambar']['name'];
+    
+    // Validasi gambar baru (jika ada)
+    $gambar_baru_upload = '';
+    if ($error == "" && !empty($_FILES['gambar']['name'])) {
         $tmp    = $_FILES['gambar']['tmp_name'];
         $ukuran = $_FILES['gambar']['size'];
-        $ext    = strtolower(pathinfo($gambar_baru, PATHINFO_EXTENSION));
+        $ext    = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png'];
 
         if (!in_array($ext, $allowed)) {
             $error = "Hanya file gambar (JPG, JPEG, PNG) yang diperbolehkan!";
         } elseif ($ukuran > 2 * 1024 * 1024) {
             $error = "Ukuran gambar maksimal 2MB!";
+        } else {
+            $gambar_baru_upload = uniqid() . '-' . $_FILES['gambar']['name'];
         }
     }
+
 
     // Jika validasi lolos, proses update
     if ($error == "") {
@@ -96,22 +108,21 @@ if (isset($_POST['update'])) {
 
         // Prioritas 1: Cek apakah gambar ditandai untuk dihapus
         if (isset($_POST['hapus_gambar']) && $_POST['hapus_gambar'] == '1') {
-             // PERBAIKAN 3: Path untuk unlink file diubah
+             // Path untuk unlink file diubah
             if (!empty($data['gambar']) && file_exists("../uploads/" . $data['gambar'])) {
                 unlink("../uploads/" . $data['gambar']);
             }
             $gambar_query_part = ", gambar=''";
         }
-        // Prioritas 2: Jika tidak, cek apakah ada gambar baru yang di-upload
-        elseif (!empty($_FILES['gambar']['name'])) {
-            // PERBAIKAN 4: Path untuk unlink file diubah
+        // Prioritas 2: Jika ada gambar baru yang di-upload
+        elseif (!empty($gambar_baru_upload)) {
+            // Hapus gambar lama jika ada
             if (!empty($data['gambar']) && file_exists("../uploads/" . $data['gambar'])) {
                 unlink("../uploads/" . $data['gambar']);
             }
-            $gambar_final = uniqid() . '-' . $_FILES['gambar']['name'];
-            // PERBAIKAN 5: Path untuk upload file diubah
-            move_uploaded_file($_FILES['gambar']['tmp_name'], "../uploads/" . $gambar_final);
-            $gambar_query_part = ", gambar='" . mysqli_real_escape_string($koneksi, $gambar_final) . "'";
+            // Upload gambar baru
+            move_uploaded_file($tmp, "../uploads/" . $gambar_baru_upload);
+            $gambar_query_part = ", gambar='" . mysqli_real_escape_string($koneksi, $gambar_baru_upload) . "'";
         }
         
         // TAMBAHAN 3: Menyiapkan kodegudang untuk query
@@ -122,24 +133,26 @@ if (isset($_POST['update'])) {
             $kodegudang_sql = "'" . mysqli_real_escape_string($koneksi, $kodegudang) . "'";
         }
 
-        // PERBAIKAN 6: Query UPDATE ditambahkan kodegudang dan di-escape
+        // PERBAIKAN 6: Query UPDATE. Jika kode produk berubah, kita update juga kolom kodeproduk.
         $query = "UPDATE produk SET 
-                    kode='" . mysqli_real_escape_string($koneksi, $kode) . "', 
+                    kodeproduk='" . mysqli_real_escape_string($koneksi, $kode_baru) . "', 
                     nama='" . mysqli_real_escape_string($koneksi, $nama) . "', 
                     satuan='" . mysqli_real_escape_string($koneksi, $satuan) . "', 
                     harga='" . mysqli_real_escape_string($koneksi, $harga) . "',
                     kodegudang=$kodegudang_sql
                     $gambar_query_part 
-                  WHERE id=$id";
+                  WHERE kodeproduk='$kode_produk'"; // WHERE tetap menggunakan kode lama
         mysqli_query($koneksi, $query);
 
         $_SESSION['msg'] = 'updated';
-        header("Location: index.php"); // Path sudah benar
+        
+        // Redirect ke index (atau ke halaman edit dengan kode baru jika kode berubah)
+        header("Location: index.php"); 
         exit;
     }
 
     // Jika ada error, data yang diinput tetap ditampilkan di form
-    $data['kode'] = htmlspecialchars($_POST['kode']);
+    $data['kodeproduk'] = htmlspecialchars($_POST['kode']); // Menggunakan kode baru yang diinput
     $data['nama'] = htmlspecialchars($_POST['nama']);
     $data['satuan'] = htmlspecialchars($_POST['satuan']);
     $data['harga'] = htmlspecialchars($_POST['harga']);
@@ -461,7 +474,7 @@ if (isset($_POST['update'])) {
                             <label class="form-label">
                                 <i class="bi bi-upc-scan icon"></i>Kode Produk
                             </label>
-                            <input type="text" name="kode" class="form-control" value="<?= htmlspecialchars($data['kode']) ?>" placeholder="Maksimal 20 karakter" required>
+                            <input type="text" name="kode" class="form-control" value="<?= htmlspecialchars($data['kodeproduk']) ?>" placeholder="Maksimal 20 karakter" required>
                             <div class="form-text">Kode harus unik untuk setiap produk</div>
                         </div>
                         <div class="col-md-6 mb-4">
@@ -581,7 +594,7 @@ if (isset($_POST['update'])) {
                             <button type="submit" name="update" class="btn btn-success">
                                 <i class="bi bi-check-lg icon"></i>Update Produk
                             </button>
-                            <button type="button" class="btn btn-danger" onclick="confirmDelete(<?= $data['id'] ?>)">
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('<?= urlencode($data['kodeproduk']) ?>')">
                                 <i class="bi bi-trash3 icon"></i>Hapus Produk
                             </button>
                         </div>
@@ -590,7 +603,7 @@ if (isset($_POST['update'])) {
                             <button type="submit" name="update" class="btn btn-success">
                                 <i class="bi bi-check-lg icon"></i>Update
                             </button>
-                            <button type="button" class="btn btn-danger" onclick="confirmDelete(<?= $data['id'] ?>)">
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete('<?= urlencode($data['kodeproduk']) ?>')">
                                 <i class="bi bi-trash3 icon"></i>Hapus
                             </button>
                         </div>
@@ -636,7 +649,57 @@ if (isset($_POST['update'])) {
 
     <script src="../modul/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../modul/js/jquery.min.js"></script>
-    <script src="../modul/js/edit.js"></script>
+    <script>
+        // Memastikan fungsi confirmDelete diperbarui untuk menggunakan 'kode'
+        function confirmDelete(kode) {
+            var deleteUrl = "edit.php?delete=" + kode;
+            $('#confirmDeleteBtn').attr('href', deleteUrl);
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+
+        $(document).ready(function() {
+            // Logika Hapus Gambar
+            var isMarkedForDeletion = false;
+            
+            $('#deleteImageBtn').on('click', function() {
+                isMarkedForDeletion = !isMarkedForDeletion;
+                if (isMarkedForDeletion) {
+                    $('#currentImageWrapper').addClass('marked-for-deletion');
+                    $('#hapusGambarInput').val('1');
+                    $(this).removeClass('btn-danger').addClass('btn-success').html('<i class="bi bi-arrow-counterclockwise"></i> Batal Hapus');
+                } else {
+                    $('#currentImageWrapper').removeClass('marked-for-deletion');
+                    $('#hapusGambarInput').val('0');
+                    $(this).removeClass('btn-success').addClass('btn-danger').html('<i class="bi bi-trash"></i>');
+                }
+            });
+
+            // Logika Preview Gambar Baru
+            $('#gambar').on('change', function() {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#preview').attr('src', e.target.result);
+                        $('#previewContainer').show();
+                        // Jika ada gambar baru, batalkan status hapus gambar lama
+                        if (isMarkedForDeletion) {
+                            $('#deleteImageBtn').trigger('click'); // Membatalkan status hapus
+                        }
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    $('#previewContainer').hide();
+                }
+            });
+
+            $('#removePreviewBtn').on('click', function() {
+                $('#gambar').val('');
+                $('#preview').attr('src', '');
+                $('#previewContainer').hide();
+            });
+        });
+    </script>
 </body>
 
 </html>

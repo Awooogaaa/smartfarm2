@@ -166,7 +166,6 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
             transition: all 0.3s ease;
         }
 
-
         .sidebar-toggle:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
@@ -203,8 +202,6 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
             display: block;
             opacity: 1;
         }
-
-        
 
         @media (max-width: 768px) {
             body {
@@ -266,45 +263,43 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
     </button>
 
     <div class="sidebar d-flex flex-column" id="sidebar">
+        <button class="sidebar-close" id="sidebarCloseBtn">&times;</button>
+        
         <div class="sidebar-header">
             <h3><i class="bi bi-tree-fill"></i>SmartFarm</h3>
             <small>Manajemen Pertanian</small>
         </div>
+        
         <ul class="nav flex-column mb-auto">
             <li class="nav-item">
                 <a class="nav-link <?php echo ($current_dir == 'produk') ? 'active' : ''; ?>" href="../produk/index.php">
                     <i class="bi bi-box-seam-fill"></i>
-                    Manajemen Produk
+                    Produk
                 </a>
             </li>
             <li class="nav-item">
-                 <a class="nav-link <?php echo ($current_dir == 'gudang') ? 'active' : ''; ?>" href="../gudang/index.php">
+                <a class="nav-link <?php echo ($current_dir == 'gudang') ? 'active' : ''; ?>" href="../gudang/index.php">
                     <i class="bi bi-house-door-fill"></i>
-                    Manajemen Gudang
+                    Gudang
                 </a>
             </li>
             <li class="nav-item">
-                 <a class="nav-link <?php echo ($current_dir == 'gudang') ? 'active' : ''; ?>" href="../gudang/index.php">
-                    <i class="bi bi-house-door-fill"></i>
-                    Manajemen Gudang
-                </a>
-            </li>
-            <li class="nav-item">
-                 <a class="nav-link <?php echo ($current_dir == 'gudang') ? 'active' : ''; ?>" href="../gudang/index.php">
-                    <i class="bi bi-house-door-fill"></i>
+                <a class="nav-link <?php echo ($current_dir == 'kendaraan') ? 'active' : ''; ?>" href="../kendaraan/index.php">
+                    <i class="bi bi-truck"></i>
                     Kendaraan
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_dir == 'pengiriman') ? 'active' : ''; ?>" href="../kirim/index.php">
+                    <i class="bi bi-send-fill"></i>
+                    Pengiriman Barang
+                </a>
+            </li>
         </ul>
-        <li class="nav-item"><a class="nav-link" href="/produk/index.php">Produk</a></li>
-        <li class="nav-item"><a class="nav-link" href="/gudang/index.php">Gudang</a></li>
-        <li class="nav-item"><a class="nav-link" href="/kendaraan/index.php">Kendaraan</a></li>
-        <li class="nav-item"><a class="nav-link" href="/kirim/index.php">Kirim</a></li>
+        
         <div class="sidebar-footer">
             <small>&copy; <?php echo date('Y'); ?> SmartFarm. All rights reserved.</small>
         </div>
-        
-        <button class="sidebar-close" id="sidebarCloseBtn">&times;</button>
     </div>
 
     <div class="main-content">
