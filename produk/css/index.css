@@ -1,0 +1,328 @@
+/* [START] KODE BARU UNTUK ZOOM GAMBAR */
+.product-image.zoomable {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.product-image.zoomable:hover {
+  transform: scale(1.1);
+}
+
+#imageModal .modal-body {
+  background-color: #f8f9fa;
+}
+
+/* [END] KODE BARU */
+
+/* Kosongkan jika semua style sudah ada di file CSS terpisah */
+/* Atau pindahkan style spesifik dari file lama ke sini */
+body {
+  /* Sesuaikan background jika berbeda dengan template */
+  background-color: #ecececff;
+}
+.main-card {
+  /* Style dari file lama */
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+.card-header {
+  /* Style dari file lama */
+  background: #ffffff !important;
+  border-bottom: 1px solid #e9ecef !important;
+  padding: 1.5rem;
+}
+.search-input {
+  /* Style dari file lama */
+  background: #ffffffff;
+  color: #495057;
+  border: 2px solid #e4e4e4ff;
+  border-radius: 50px;
+  padding: 10px 56px 10px 16px;
+  font-size: 15px;
+  height: 46px;
+}
+.search-input:focus {
+  /* Style dari file lama */
+  outline: none;
+  border-color: #2af598;
+}
+.btn-search {
+  /* Style dari file lama */
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #2af598 0%, #009efd 100%);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+.btn-search:hover {
+  /* Style dari file lama */
+  transform: translateY(-50%) scale(1.05);
+}
+.btn-reset {
+  /* Style dari file lama */
+  background: #dc3545;
+  color: #fff;
+  border-radius: 25px;
+  font-size: 15px;
+  height: 40px;
+  line-height: 40px;
+  padding: 0 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.btn-reset:hover {
+  /* Style dari file lama */
+  background: #ff0019;
+  color: #fff;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(255, 0, 25, 0.4);
+}
+.stats-badge {
+  /* Style dari file lama */
+  background: #e7f3ff;
+  color: #0066cc;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+.btn-custom {
+  /* Style dari file lama - pastikan hover state bekerja */
+  position: relative;
+  overflow: hidden;
+}
+.btn-custom .hover-state {
+  background: #009efd;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  position: absolute; /* Pastikan ini ada */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex; /* Untuk ikon center */
+  align-items: center;
+  justify-content: center;
+}
+.btn-custom .default-state {
+  transition: transform 0.3s ease;
+}
+.btn-custom:hover .default-state {
+  transform: translateY(-100%);
+}
+.btn-custom:hover .hover-state {
+  transform: translateY(0%);
+}
+.btn-custom-mobile {
+  /* Style dari file lama */
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #009beb !important;
+  color: white !important; /* Tambahkan warna putih */
+  text-decoration: none; /* Hapus garis bawah */
+}
+.limit-container {
+  /* Style dari file lama */
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.limit-label {
+  /* Style dari file lama */
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.limit-label i {
+  /* Style dari file lama */
+  color: #009beb;
+}
+.limit-select {
+  /* Style dari file lama */
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  font-weight: 500;
+  color: #495057;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23009BEB' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+}
+.limit-select:hover {
+  /* Style dari file lama */
+  border-color: #009beb;
+  box-shadow: 0 2px 8px rgba(0, 155, 235, 0.15);
+}
+.limit-select:focus {
+  /* Style dari file lama */
+  outline: none;
+  border-color: #2af598;
+  box-shadow: 0 0 0 3px rgba(42, 245, 152, 0.1);
+}
+.table-clean {
+  /* Style dari file lama */
+  word-wrap: break-word;
+}
+.table-clean thead th {
+  /* Style dari file lama */
+  white-space: nowrap;
+  background-color: #f8f9fa; /* Tambahkan background agar lebih jelas */
+  border-bottom-width: 2px;
+}
+.product-image {
+  /* Style dari file lama */
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.product-code {
+  /* Style dari file lama */
+  background: #fff3cd;
+  color: #856404;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: "Courier New", monospace;
+  font-size: 0.8rem;
+}
+.unit-badge {
+  /* Style dari file lama */
+  background: #d1ecf1;
+  color: #0c5460;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.price-badge {
+  /* Style dari file lama */
+  background: #d4edda;
+  color: #155724;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.gudang-badge {
+  /* Style BARU untuk Gudang */
+  background-color: #cfe2ff;
+  color: #0a3675;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.golongan-badge {
+  /* Style BARU untuk Golongan */
+  background-color: #e2e3e5;
+  color: #495057;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.btn-edit {
+  /* Style dari file lama */
+  background: #0dcaf0; /* Biru muda */
+  color: #fff;
+  border-radius: 5px;
+  font-size: 14px; /* Sedikit lebih kecil */
+  padding: 4px 8px; /* Lebih kecil */
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.btn-edit:hover {
+  /* Style dari file lama */
+  background: #0aa2c0;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(13, 202, 240, 0.4);
+}
+/* Responsive Styles dari file lama (jika ada yang perlu disesuaikan) */
+@media (max-width: 768px) {
+  .search-form {
+    width: 100%;
+    margin-top: 1rem;
+  }
+  .stats-badge {
+    display: none !important;
+  }
+  .mobile-stats-badge {
+    background: #e7f3ff;
+    color: #0066cc;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    display: inline-block !important; /* Pastikan terlihat */
+  }
+  .mobile-product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  .mobile-title-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .mobile-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .table-clean th,
+  .table-clean td {
+    font-size: 0.85rem; /* Ukuran font lebih kecil di mobile */
+    padding: 0.75rem 0.5rem; /* Padding lebih kecil */
+  }
+  .product-code,
+  .unit-badge,
+  .price-badge,
+  .gudang-badge,
+  .golongan-badge {
+    font-size: 0.75rem; /* Ukuran badge lebih kecil */
+    padding: 4px 6px;
+  }
+  .product-image {
+    width: 50px;
+    height: 50px;
+  }
+  .limit-container {
+    padding: 0.75rem 1rem;
+  }
+  .limit-label {
+    font-size: 0.85rem;
+  }
+  .limit-select {
+    padding: 0.4rem 2rem 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+@media (min-width: 769px) {
+  .mobile-stats-badge {
+    display: none !important; /* Sembunyikan di desktop */
+  }
+}
