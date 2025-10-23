@@ -166,6 +166,7 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
             transition: all 0.3s ease;
         }
 
+
         .sidebar-toggle:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
@@ -202,6 +203,8 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
             display: block;
             opacity: 1;
         }
+
+        
 
         @media (max-width: 768px) {
             body {
@@ -280,7 +283,23 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
                     Manajemen Gudang
                 </a>
             </li>
+            <li class="nav-item">
+                 <a class="nav-link <?php echo ($current_dir == 'gudang') ? 'active' : ''; ?>" href="../gudang/index.php">
+                    <i class="bi bi-house-door-fill"></i>
+                    Manajemen Gudang
+                </a>
+            </li>
+            <li class="nav-item">
+                 <a class="nav-link <?php echo ($current_dir == 'gudang') ? 'active' : ''; ?>" href="../gudang/index.php">
+                    <i class="bi bi-house-door-fill"></i>
+                    Kendaraan
+                </a>
+            </li>
         </ul>
+        <li class="nav-item"><a class="nav-link" href="/produk/index.php">Produk</a></li>
+        <li class="nav-item"><a class="nav-link" href="/gudang/index.php">Gudang</a></li>
+        <li class="nav-item"><a class="nav-link" href="/kendaraan/index.php">Kendaraan</a></li>
+        <li class="nav-item"><a class="nav-link" href="/kirim/index.php">Kirim</a></li>
         <div class="sidebar-footer">
             <small>&copy; <?php echo date('Y'); ?> SmartFarm. All rights reserved.</small>
         </div>

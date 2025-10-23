@@ -336,9 +336,9 @@ if (isset($_GET['cari']) && trim($_GET['cari']) != "") {
 }
 
 // PERBAIKAN: JOIN dengan tabel gudang dan SELECT g.golongan
-$countQuery = mysqli_query($koneksi, "SELECT COUNT(p.id) as total 
+$countQuery = mysqli_query($koneksi, "SELECT COUNT(kodeproduk) as total 
                                       FROM produk p 
-                                      LEFT JOIN gudang g ON p.kodegudang = g.kodegudang 
+                                      LEFT JOIN gudang g ON kodegudang = g.kodegudang 
                                       $where");
 $totalData = mysqli_fetch_assoc($countQuery)['total'];
 $totalPages = ($limit > 0) ? ceil($totalData / $limit) : 1; // Hindari division by zero jika limit 0
@@ -347,9 +347,9 @@ $totalPages = max(1, $totalPages); // Pastikan minimal 1 halaman
 // PERBAIKAN: JOIN dengan tabel gudang dan SELECT g.golongan
 $result = mysqli_query($koneksi, "SELECT p.*, g.namagudang, g.golongan 
                                   FROM produk p 
-                                  LEFT JOIN gudang g ON p.kodegudang = g.kodegudang 
+                                  LEFT JOIN gudang g ON kodegudang = g.kodegudang 
                                   $where 
-                                  ORDER BY p.id DESC 
+                                  ORDER BY kodeproduk DESC 
                                   LIMIT $limit OFFSET $offset");
                                   
 $countAll = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM produk");
