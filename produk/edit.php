@@ -18,25 +18,49 @@ if (!isset($_GET['kode'])) {
 // PERBAIKAN: Menggunakan $kode_produk sebagai identifier
 $kode_produk = mysqli_real_escape_string($koneksi, $_GET['kode']);
 
-// Hapus produk
+
+// **[START PERBAIKAN LOGIKA DELETE DI ATAS]**
+
+// 1. Muat Error dari Session (Jika ada error dari delete sebelumnya)
+if (isset($_SESSION['delete_error'])) {
+    $error = $_SESSION['delete_error'];
+    unset($_SESSION['delete_error']);
+}
+
+// 2. Hapus produk (Dipicu oleh link GET: edit.php?delete=KODE)
 if (isset($_GET['delete'])) {
-    // PERBAIKAN: Menggunakan $kode_produk dari URL
     $delete_kode = mysqli_real_escape_string($koneksi, $_GET['delete']);
+    
+    // Cek Keterhubungan ke Pengiriman
+    $cekKirim = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM detailkirim WHERE kodeproduk='$delete_kode'");
+    $totalKirim = mysqli_fetch_assoc($cekKirim)['total'];
+
+    if ($totalKirim > 0) {
+        // GAGAL: Set pesan error dan kembalikan ke halaman edit produk ini
+        $_SESSION['delete_error'] = "Gagal menghapus produk! Produk ini sudah digunakan dalam **{$totalKirim}** transaksi pengiriman dan tidak dapat dihapus.";
+        header("Location: edit.php?kode=" . urlencode($delete_kode)); 
+        exit;
+    }
+    
+    // SUKSES: Lanjutkan proses penghapusan
     // Ambil info gambar dari kode produk yang akan dihapus
     $result_to_delete = mysqli_query($koneksi, "SELECT gambar FROM produk WHERE kodeproduk='$delete_kode'");
     $row_to_delete = mysqli_fetch_assoc($result_to_delete);
     
-    // PERBAIKAN 2: Path untuk unlink file diubah
+    // Hapus file gambar
     if ($row_to_delete && !empty($row_to_delete['gambar']) && file_exists("../uploads/" . $row_to_delete['gambar'])) {
         unlink("../uploads/" . $row_to_delete['gambar']);
     }
-    // PERBAIKAN: Menggunakan kodeproduk
+    
+    // Hapus dari database
     mysqli_query($koneksi, "DELETE FROM produk WHERE kodeproduk='$delete_kode'");
 
     $_SESSION['msg'] = 'deleted';
-    header("Location: index.php"); // Path sudah benar
+    header("Location: index.php"); 
     exit;
 }
+// **[END PERBAIKAN LOGIKA DELETE DI ATAS]**
+
 
 // Ambil data produk yang akan diedit
 // PERBAIKAN: Menggunakan kodeproduk di klausa WHERE
@@ -171,7 +195,16 @@ if (isset($_POST['update'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <style>
-        /* Hide all scrollbars */
+        /* CSS Dihilangkan untuk keringkasan */
+        .alert-danger-custom {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: .25rem;
+        }
+        /* ... (sisa CSS) ... */
         * {
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -454,7 +487,7 @@ if (isset($_POST['update'])) {
                     <div class="col-md-4 text-end">
                         <a href="index.php" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-1"></i>Kembali
-                        </a>
+                        </a >
                     </div>
                 </div>
             </div>

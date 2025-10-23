@@ -27,6 +27,7 @@ $kendaraan_res = mysqli_query($koneksi, "SELECT nopol, jeniskendaraan FROM kenda
         <div class="mb-3">
             <label>Kode Kirim</label>
             <input type="text" value="<?= htmlspecialchars($d['kodekirim']); ?>" class="form-control" readonly>
+            <small class="form-text text-muted">Kode tidak dapat diubah (Primary Key)</small>
         </div>
 
         <div class="mb-3">
@@ -48,7 +49,10 @@ $kendaraan_res = mysqli_query($koneksi, "SELECT nopol, jeniskendaraan FROM kenda
         <div class="mb-3">
             <label>Produk</label>
             <select name="kodeproduk" class="form-select" required>
-                <?php while($p = mysqli_fetch_assoc($produk_res)) { ?>
+                <?php 
+                // Reset pointer untuk digunakan di form
+                mysqli_data_seek($produk_res, 0); 
+                while($p = mysqli_fetch_assoc($produk_res)) { ?>
                 <option value="<?= htmlspecialchars($p['kodeproduk']); ?>" <?= ($p['kodeproduk'] == $d['kodeproduk'])?'selected':'' ?>>
                     <?= htmlspecialchars($p['nama']); ?>
                 </option>
